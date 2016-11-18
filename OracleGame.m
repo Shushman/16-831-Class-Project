@@ -27,10 +27,10 @@ classdef OracleGame < handle
         end
         
         % Returns vector of rewards for all actions from a given state
-        function rewards = get_all_rewards(site,f,g,h)
+        function rewards = get_all_rewards(self,site,f,g,h)
             
             %TODO - need to discourage just taking same ride
-            dists = self.siteDists(site,:);
+            dists = self.siteDist(site,:);
             waitTimes = self.lambdas;
             satisfs = self.means;
             
@@ -42,11 +42,9 @@ classdef OracleGame < handle
         
         
         %Reward for moving from init state to all
-        function init_rewards = get_init_rewards(f,g,h)
+        function init_rewards = get_init_rewards(self,f,g,h)
             waitTimes = self.lambdas;
             satisfs = self.means;
-            
-            satisfs(site) = 0;
             
             init_rewards = -f*self.m0*ones(size(self.means)) -g*waitTimes + h*satisfs;
         end
