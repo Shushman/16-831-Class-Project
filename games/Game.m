@@ -8,6 +8,8 @@ classdef (Abstract) Game < handle
     methods
         reward = get_reward(self, site, next_site);
         rewards = get_all_rewards(self, site);
+        [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site); 
+        [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site);
     end
     
 end

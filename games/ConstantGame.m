@@ -33,44 +33,53 @@ classdef ConstantGame < Game
         end
         
         function reward = get_reward(self, site, next_site)
+            [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site);
+            reward = -self.f*dist - self.g*waitTime + self.h*satisf;
+        end
+        
+        function rewards = get_all_rewards(self, site)
+            [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site);
+            rewards = -self.f*dists - self.g*waitTimes + self.h*satisfs;
+        end
+        
+        function [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site)
             self.round = self.round + 1;
             if self.round > self.nRounds
-                reward = 0;
+                dist = 0; waitTime=0; satisf = 0;
                 return
             end
-            
             
             if self.round == 1
                 waitTime = self.lambdas(next_site);
                 satisf = self.means(next_site);
-                reward = -self.f*self.m0 - self.g*waitTime + self.h*satisf;
+                dist = self.m0;
                 return
             end
             
             dist = self.siteDist(site,next_site);
             waitTime = self.lambdas(next_site);
             
-            %Set reward for current site to 0;
+            % Set reward for current site to 0;
             if site == next_site
                 satisf = 0;
             else
                 satisf = self.means(next_site);
             end
-            
-            reward = -self.f*dist - self.g*waitTime + self.h*satisf;
         end
         
-        function rewards = get_all_rewards(self, site)
+        function [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site)
             self.round = self.round + 1;
             if self.round > self.nRounds
-                rewards = zeros(self.nSites, 1);
+                dists = zeros(self.nSites, 1);
+                waitTimes = zeros(self.nSites, 1);
+                satisfs = zeros(self.nSites, 1);
                 return
             end
             
             if self.round == 1
                 waitTimes = self.lambdas;
                 satisfs = self.means;
-                rewards = -self.f*self.m0 - self.g*waitTimes + self.h*satisfs;
+                dists = self.m0*ones(self.nSites, 1);
                 return
             end
             
@@ -80,10 +89,7 @@ classdef ConstantGame < Game
             
             %Set reward for current site to 0;
             satisfs(site) = 0;
-            
-            rewards = -self.f*dists - self.g*waitTimes + self.h*satisfs;
         end
-        
         
     end
 end
