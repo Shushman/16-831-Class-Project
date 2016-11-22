@@ -42,7 +42,9 @@ classdef UCBPolicy < Policy
             self.round = self.round + 1;
             C = self.countObserved;
             ubSatisf = self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C));
-            ubWaitTime = self.sumWaitTime./C + sqrt(self.alpha*log(self.round)./(2*C));
+            % ------- changes made by Anqi begin here ------------%
+            ubWaitTime = max(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)),0);
+            % ------- changes made by Anqi end here --------------%
             if self.round == 1
                 dist = self.game.m0*ones(1, self.nSites);
             else
