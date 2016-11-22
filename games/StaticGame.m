@@ -86,6 +86,59 @@ classdef StaticGame < Game
             rewards = -self.f*dists - self.g*waitTimes + self.h*satisfs;
         end
         
+        %------------- changes made by Anqi begin here ----------------%
+        % Returns the elementwise reward for a single (state,action) pair
+        function [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site)
+            self.round = self.round + 1;
+            if self.round > self.nRounds
+                dist = 0; waitTime=0; satisf = 0;
+                return
+            end
+            
+            if self.round == 1
+                waitTime = poissrnd(self.lambdas(next_site));
+                satisf = normrnd(self.means(next_site),self.sigmas(next_site));
+                dist = self.m0;
+                return
+            end
+            
+            dist = self.siteDist(site,next_site);
+            waitTime = poissrnd(self.lambdas(next_site));
+            
+            % Set reward for current site to 0;
+            if site == next_site
+                satisf = 0;
+            else
+                satisf = normrnd(self.means(next_site),self.sigmas(next_site));
+            end
+        end
+        
+        function [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site)
+            self.round = self.round + 1;
+            if self.round > self.nRounds
+                dists = zeros(self.nSites, 1);
+                waitTimes = zeros(self.nSites, 1);
+                satisfs = zeros(self.nSites, 1);
+                return
+            end
+            
+            if self.round == 1
+                waitTimes = poissrnd(self.lambdas);
+                satisfs = normrnd(self.means,self.sigmas);
+                dists = self.m0*ones(self.nSites, 1);
+                return
+            end
+            
+            dists = self.siteDist(site,:);
+            waitTimes = poissrnd(self.lambdas);
+            satisfs = normrnd(self.means,self.sigmas);
+            
+            %Set reward for current site to 0;
+            satisfs(site) = 0;
+        end
+        
+        %------------- changes made by Anqi end here -----------------%
+        
     end
     
 end
