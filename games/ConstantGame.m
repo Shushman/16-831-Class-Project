@@ -11,9 +11,9 @@ classdef ConstantGame < Game
         nRounds     %Rounds to run game for
         round       % current round
         lambdas     % waittime
-        f           % weight on distance
-        g           % weight on wait time
-        h           % weight on ride satisfaction
+        weightDist           % weight on distance
+        weightWait          % weight on wait time
+        weightRide           % weight on ride satisfaction
     end
     
     methods
@@ -26,30 +26,32 @@ classdef ConstantGame < Game
             self.means = means;
             self.lambdas = lambdas;
             self.nRounds = nRounds;
-            self.f = f;
-            self.g = g;
-            self.h = h;
-            self.round = 0;
+            self.weightDist = f;
+            self.weightWait = g;
+            self.weightRide = h;
+            self.round = 0;     
+
+        end
+        
+        function reset(self)
+            self.round = 0;     
         end
         
         function reward = get_reward(self, site, next_site)
             [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site);
-            reward = -self.f*dist - self.g*waitTime + self.h*satisf;
+            reward = -self.weightDist*dist - self.weightWait*waitTime + self.weightRide*satisf;
         end
         
         function rewards = get_all_rewards(self, site)
             [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site);
-            rewards = -self.f*dists - self.g*waitTimes + self.h*satisfs;
+            rewards = -self.weightDist*dists - self.weightWait*waitTimes + self.weightRide*satisfs;
+            rewards = rewards';
         end
         
         function [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site)
             self.round = self.round + 1;
-            if self.round > self.nRounds
-                dist = 0; waitTime=0; satisf = 0;
-                return
-            end
             
-            if self.round == 1
+            if site < 1
                 waitTime = self.lambdas(next_site);
                 satisf = self.means(next_site);
                 dist = self.m0;
@@ -68,22 +70,15 @@ classdef ConstantGame < Game
         end
         
         function [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site)
-            self.round = self.round + 1;
-            if self.round > self.nRounds
-                dists = zeros(self.nSites, 1);
-                waitTimes = zeros(self.nSites, 1);
-                satisfs = zeros(self.nSites, 1);
-                return
-            end
-            
-            if self.round == 1
+            self.round = self.round + 1;             
+            if site < 1
                 waitTimes = self.lambdas;
                 satisfs = self.means;
                 dists = self.m0*ones(self.nSites, 1);
                 return
             end
             
-            dists = self.siteDist(site,:);
+            dists = self.siteDist(site,:)';
             waitTimes = self.lambdas;
             satisfs = self.means;
             

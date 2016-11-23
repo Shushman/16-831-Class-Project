@@ -10,14 +10,14 @@ classdef UCBPolicy < Policy
         round
         lastAction
         ubSatisfs
-        ubWaitTimes
+        lbWaitTimes
         lastUb
         alpha
         siteDists
         game
-        f
-        g
-        h
+        weightDist           % weight on distance
+        weightWait          % weight on wait time
+        weightRide           % weight on ride satisfaction
     end
     
     methods
@@ -26,9 +26,9 @@ classdef UCBPolicy < Policy
             self.nSites = game.nSites;
             self.round = 0;
             self.siteDists = game.siteDist;
-            self.f = game.f;
-            self.g = game.g;
-            self.h = game.h;
+            self.weightDist = game.weightDist;
+            self.weightWait = game.weightWait;
+            self.weightRide = game.weightRide;
             self.game = game;
             
             self.sumSatisf = zeros(1, self.nSites);
@@ -42,22 +42,20 @@ classdef UCBPolicy < Policy
             self.round = self.round + 1;
             C = self.countObserved;
             ubSatisf = self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C));
-            % ------- changes made by Anqi begin here ------------%
-            ubWaitTime = max(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)),0);
-            % ------- changes made by Anqi end here --------------%
+            lbWaitTime = max(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)),0);
             if self.round == 1
                 dist = self.game.m0*ones(1, self.nSites);
             else
                 dist = self.siteDists(site,:);
             end
             self.ubSatisfs = [self.ubSatisfs; ubSatisf];
-            self.ubWaitTimes = [self.ubWaitTimes; ubWaitTime];
+            self.lbWaitTimes = [self.lbWaitTimes; lbWaitTime];
             
             if site > 0
                 ubSatisf(site) = 0;
             end
 
-            ubReward = -self.f*dist - self.g*ubWaitTime + self.h*ubSatisf;
+            ubReward = -self.weightDist*dist - self.weightWait*lbWaitTime + self.weightRide*ubSatisf;
             [~, action] = max(ubReward);
 
 
@@ -88,11 +86,11 @@ classdef UCBPolicy < Policy
             
             figure(4); clf; hold on;
             for i = 1:self.nSites
-                plot(self.ubWaitTimes(:, i));
+                plot(self.lbWaitTimes(:, i));
             end
             legend('1','2','3','4');
-            xlabel('rounds'); ylabel('upper bound');
-            title('Upper bound on waittime')
+            xlabel('rounds'); ylabel('lower bound');
+            title('Lower bound on waittime')
             hold off;
             
             
