@@ -21,26 +21,35 @@ f = 1; g = 1; h = 1.5;
 
 
 % Game
-game = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h);
+N = 50;
+result = zeros(N,1);
+for iter=1:N
+	game = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h);
 
-%% Generate object 
-policy = TDPolicy(game);
+	%% Generate object 
+	policy = TDPolicy(game);
+	% train the policy
+	policy.training(1);
+	% disp(policy.P);
 
-% train the policy
-policy.training(1);
-disp(policy.P);
+	% test the policy
+	game.round = 0;
+	agent = Agent(policy, game);
+	sites = zeros(nRounds+10,1);
+	rewards = zeros(nRounds+10,1);
+	for i = 1:nRounds + 10
+	    [reward, site] = agent.ride();
+	    sites(i) = site;
+	    rewards(i) = reward;
+	end
+	disp(sum(rewards));
+	if sum(rewards) > 17000 
+		result(iter) = 1;
+	end
 
-% test the policy
-game.round = 0;
-agent = Agent(policy, game);
-sites = zeros(nRounds+10,1);
-rewards = zeros(nRounds+10,1);
-for i = 1:nRounds + 10
-    [reward, site] = agent.ride();
-    sites(i) = site;
-    rewards(i) = reward;
 end
-
+disp(sum(result)/N);
+return;
 figure(1);clf(1);hold on;
 subplot(2,1,1);
 plot(1:nRounds + 10, cumsum(rewards), '.-')

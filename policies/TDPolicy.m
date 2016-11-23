@@ -36,12 +36,13 @@ classdef TDPolicy < Policy
         	% 	gamma: eligibility tree discount factor
         	% 	alpha: Q update step size, 0< alpha <= 1
         	% 	lambda: SARSA(lambda)
-        	paraTrain.H = self.game.nRounds;
-        	paraTrain.n = 1; 
-        	paraTrain.epsilon = 0.1;
-        	paraTrain.gamma = 0.6;
-        	paraTrain.alpha = 0.9;
-        	paraTrain.lambda = 0.6;
+			paraTrain.H       = self.game.nRounds;
+			paraTrain.n       = 1; 
+			paraTrain.epsilon = [1 0.2 0.10];
+			paraTrain.switchT = 0.5;
+			paraTrain.gamma   = 0.1;
+			paraTrain.alpha   = 0.9;
+			paraTrain.lambda  = 0.6;
 
         	for epid = 1:nEpisodes
 				[P_, Q] = SARSA(s0, Q, ns+1, A, fun, paraTrain);
@@ -89,12 +90,22 @@ function [P, Q] = SARSA(s0, Q, ns, A, f, paraTrain)
 % ------------------------------------------------------
 % 		Initialization
 % ------------------------------------------------------
-
+% epsilon-greedy profile:
+% 	T0 ~ T1: epsilon(1)~epsilon(2)
+% 	after T1: epsilon(3)
+T1 = ceil(paraTrain.n*paraTrain.switchT);
 
 % ------------------------------------------------------
 % 		Training
 % ------------------------------------------------------
 for epi = 1:paraTrain.n
+	% determine epsilon to use
+	if epi < T1
+		epsilon = ( (T1-epi)*paraTrain.epsilon(1) + epi*paraTrain.epsilon(2) )/T1;
+	else
+		epsilon = paraTrain.epsilon(3);
+	end
+
 	% initialize eligibility tree
 	Z = cell(ns,1); 
 	for is = 1:ns
@@ -110,7 +121,7 @@ for epi = 1:paraTrain.n
 			% episode terminated
 			continue;
 		end
-		anew           = greedy_epsilon(Q{snew}, paraTrain.epsilon);
+		anew           = greedy_epsilon(Q{snew}, epsilon);
 		delta          = reward + paraTrain.gamma*Q{snew}(anew) - Q{s}(a);
 		% update eligibility tree
 		Z{s}(a)        = Z{s}(a) + 1;
