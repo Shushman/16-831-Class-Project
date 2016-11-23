@@ -74,23 +74,22 @@ classdef UCBPolicy < Policy
         end        
         
         function drawUpperBounds(self)
-            figure(3); clf; hold on;
+            figure(3);
+            clf; hold on;
             for i = 1:self.nSites
-                plot(self.ubSatisfs(:, i));
+                plot(self.ubSatisfs(:, i),'LineWidth',3);
             end
-            plot([1,1,1,1], self.game.means, 'o');
-            legend('1','2','3','4');
-            xlabel('rounds'); ylabel('upper bound');
-            title('Upper bound on ride satisfaction')
-            hold off;
+            xlabel('Rounds'); ylabel('Upper bound');
+            title('Upper bound on Ride Satisfaction')
             
-            figure(4); clf; hold on;
+            figure(4)
+            clf;
+            hold on;
             for i = 1:self.nSites
-                plot(self.lbWaitTimes(:, i));
+                plot(self.lbWaitTimes(:, i),'LineWidth',3);
             end
-            legend('1','2','3','4');
-            xlabel('rounds'); ylabel('lower bound');
-            title('Lower bound on waittime')
+            xlabel('Rounds'); ylabel('Lower bound');
+            title('Lower bound on Wait Time')
             hold off;
             
             

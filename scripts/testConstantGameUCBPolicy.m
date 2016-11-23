@@ -28,11 +28,16 @@ for i = 1:nRounds
     prevsite = site;
 end
 
-plot(1:nRounds, cumsum(rewards), 'o-')
-xlabel('rounds')
-ylabel('cumulative rewards')
+figure(1);
+subplot(1,2,1);
+plot(1:nRounds, cumsum(rewards), 'o-','LineWidth',3);
+xlabel('Rounds')
+ylabel('Cumulative Rewards')
+
+subplot(1,2,2);
+plot(1:nRounds, sites,'o','LineWidth',3);
+xlabel('Rounds');
+ylabel('Actions taken');
 
 policy.drawUpperBounds();
-figure(2);
-plot(1:nRounds, sites,'o')
 

@@ -14,6 +14,7 @@ while t < gameObj.nRounds
         currRewards = gameObj.get_all_rewards(s);
         
         % Get rewards from taking each action
+       
         tempVals = currRewards + oldValue;
         [v,~] = max(tempVals);
         value(s) = v;

@@ -2,25 +2,24 @@ clc; clear;
 
 addpath ../policies
 addpath ../games
+addpath ../data
 addpath ../
 
 %% Game parameters
-nSites = 4;
-siteDist = [0 5 100 100; 50 0 10 100; 55 60 0 5; 10 130 65 0];
-m0 = 20;
-means = [50,20,30,50]';
-lambdas = [20,5,5,30]';
-nRounds = 500;
-f = 1; g = 1; h = 1.5;
+load('map1.mat');
+
+%% nRounds or other parameters can be changed here
+nRounds = 100;
+% f = 1.5;
 
 %% Generate object 
-game = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h);
-
+sigmas = diag(sigmas)';
+game = StaticGame(nSites,siteDist,m0,means,sigmas,lambdas,nRounds,f,g,h);
 
 % FullDP policy
 DPpolicy = valueIteration(game,f,g,h);
 agent = Agent(DPpolicy, game);
-game.reset()
+game.reset();
 DPsites = zeros(nRounds,1);
 DPrewards = zeros(nRounds,1);
 for i = 1:nRounds
@@ -45,6 +44,7 @@ for i = 1:nRounds
 end
 
 
+
 %% TDPolicy
 game.reset();
 TDpolicy = TDPolicy(game);
@@ -64,6 +64,8 @@ for i = 1:nRounds
     TDrewards(i) = reward;
 end
 
+
+
 figure(1)
 subplot(1,2,1)
 plot(1:nRounds, cumsum(DPrewards), 'ro',...
@@ -75,12 +77,10 @@ title('Comparison of DP, UCB, TD')
 legend('DP','UCB','TD');
 
 subplot(1,2,2)
-nRounds = 50;
-plot(1:nRounds, DPsites(1:50), 'ro',...
-     1:nRounds, UCBsites(1:50), 'k+',...
-     1:nRounds, TDsites(1:50), 'bp');
- xlabel('First 50 Rounds');
+plot(1:nRounds, DPsites, 'ro',...
+     1:nRounds, UCBsites, 'k+',...
+     1:nRounds, TDsites, 'bp');
+ xlabel('Rounds');
 ylabel('Action taken at each timestep')
 title('Comparison of DP, UCB, TD')
 legend('DP','UCB','TD');
- 
