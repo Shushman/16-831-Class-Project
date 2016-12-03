@@ -26,11 +26,15 @@ for i = 1:nRounds
     policy.updatePolicy(prevsite, site, satisf, waitTime);
     prevsite = site;
 end
-
+figure(1)
 plot(1:nRounds, cumsum(rewards), 'o-')
 xlabel('rounds')
 ylabel('cumulative rewards')
 
+figure(2)
+plot(1:nRounds, sites,'o','LineWidth',3);
+xlabel('Rounds');
+ylabel('Actions taken');
 % policy.drawUpperBounds();
 % figure(2);
 % plot(1:nRounds, sites,'o')

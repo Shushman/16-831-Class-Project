@@ -13,7 +13,9 @@ nRounds = 100;
 % f = 1.5;
 
 %% Generate object 
+sigmas = diag(sigmas)';
 game = StaticGame(nSites,siteDist,m0,means,sigmas,lambdas,nRounds,f,g,h);
+
 policy = UCBPolicy(game);
 agent = Agent(policy, game);
 sites = zeros(nRounds,1);
@@ -27,11 +29,12 @@ for i = 1:nRounds
     prevsite = site;
 end
 
+figure(1)
 plot(1:nRounds, cumsum(rewards), 'o-')
 xlabel('rounds')
 ylabel('cumulative rewards')
 
-% policy.drawUpperBounds();
-% figure(2);
-% plot(1:nRounds, sites,'o')
+policy.drawUpperBounds();
+figure(2);
+plot(1:nRounds, sites,'o')
 

@@ -1,19 +1,20 @@
-function [policy,value,firstSite] = valueIterationOracleGame(oracleObj,f,g,h)
+function [policy,value,firstSite] = valueIteration(gameObj,f,g,h)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-policy = ones(1,oracleObj.nSites);
-value = zeros(1,oracleObj.nSites);
+policy = FullDPPolicy(gameObj);
+value = zeros(1,gameObj.nSites);
 
 t = 0;
 
-while t < oracleObj.nRounds
+while t < gameObj.nRounds
     t = t+1;
     oldValue = value;
-    for s = 1:oracleObj.nSites
-        currRewards = oracleObj.get_all_rewards(s,f,g,h);
+    for s = 1:gameObj.nSites
+        currRewards = gameObj.get_all_rewards(s);
         
         % Get rewards from taking each action
+       
         tempVals = currRewards + oldValue;
         [v,~] = max(tempVals);
         value(s) = v;
@@ -22,21 +23,18 @@ while t < oracleObj.nRounds
 end
 
 % Get policy
-for s = 1:oracleObj.nSites
-    
-    currRewards = oracleObj.get_all_rewards(s,f,g,h);
+for s = 1:gameObj.nSites
+    currRewards = gameObj.get_all_rewards(s);
     tempVals = currRewards + value;
     
     [~,a] = max(tempVals);
-    
-    policy(s) = a;
+    policy.update(s, a);
 end
 
-% Get first action
-initRewards = oracleObj.get_init_rewards(f,g,h);
+initRewards = gameObj.get_all_rewards(0);
 tempVals = initRewards + value;
 [~,firstSite] = max(tempVals);
-
+policy.update(0, firstSite);
 
 end
 
