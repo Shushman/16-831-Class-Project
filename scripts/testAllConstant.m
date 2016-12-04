@@ -9,18 +9,18 @@ nSites = 4;
 siteDist = ones(4,4) - eye(4);
 m0 = 0;
 means = [10, 20, 30, 40];
-lambdas = [20,5,5,30];
+lambdas = [4,3,2,1];
 means = means / max(means);
 lambdas = lambdas / max(lambdas);
 
-nRounds = 50;
+nRounds = 100;
 f = 0;
 g = 0.5;
 h = 0.5;
 
 map = Map(4, 10, 0.5, 'uniform');
 
-
+draw = 0;
 %% Generate object 
 game = ConstantGame(map,means,lambdas,nRounds,f,g,h);
 
@@ -50,7 +50,11 @@ for i = 1:nRounds
     UCBrewards(i) = reward;
     ucbPolicy.updatePolicy(prevsite, site, satisf, waitTime);
     prevsite = site;
+    if draw
+        map.draw(prevsite, site, game, 'EXP3');
+    end
 end
+ucbPolicy.drawUpperBounds();
 
 %%
 
@@ -67,6 +71,9 @@ for i = 1:nRounds
     EXP3rewards(i) = reward;
     exp3Policy.updatePolicy(prevsite, site, reward);
     prevsite = site;
+    if draw
+        map.draw(prevsite, site, game, 'EXP3');
+    end
 end
 
 
@@ -87,6 +94,9 @@ for i = 1:nRounds
     [reward, site] = agent.ride();
     TDsites(i) = site;
     TDrewards(i) = reward;
+    if draw
+        map.draw(prevsite, site, game, 'EXP3');
+    end
 end
 
 figure(1)

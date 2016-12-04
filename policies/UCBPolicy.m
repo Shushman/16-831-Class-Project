@@ -34,22 +34,22 @@ classdef UCBPolicy < Policy
             self.sumSatisf = zeros(1, self.nSites);
             self.sumWaitTime = zeros(1, self.nSites);
             self.countObserved = 1e-5*ones(1, self.nSites);
-            self.alpha = 1;
+            self.alpha = 0.1;
         end
         
         function action = decision(self, site, ~)
             % Choose action
             self.round = self.round + 1;
             C = self.countObserved;
-            ubSatisf = self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C));
-            lbWaitTime = self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C));
+            ubSatisf = clamp(self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C)));
+            lbWaitTime = clamp(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)));
             if self.round == 1
                 dist = self.game.m0*ones(1, self.nSites);
             else
                 dist = self.siteDists(site,:);
             end
-            self.ubSatisfs = [self.ubSatisfs; ubSatisf];
-            self.lbWaitTimes = [self.lbWaitTimes; lbWaitTime];
+            self.ubSatisfs = [self.ubSatisfs; clamp(ubSatisf)];
+            self.lbWaitTimes = [self.lbWaitTimes; clamp(lbWaitTime)];
             
             if site > 0
                 ubSatisf(site) = 0;
@@ -58,7 +58,10 @@ classdef UCBPolicy < Policy
             ubReward = compute_reward(self.weightDist, self.weightWait, self.weightRide, ...
                                      dist, lbWaitTime, ubSatisf);
                                      
-            [~, action] = max(ubReward);  
+            [maxV] = max(ubReward);  
+            idx = find(ubReward == maxV);
+            r = randsample(length(idx),1);
+            action = idx(r);
         end
         
         function updatePolicy(self, prevsite, site, satisf, waittime)

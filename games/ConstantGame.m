@@ -52,9 +52,9 @@ classdef ConstantGame < Game
             satisf = self.means;
             
             %Set reward for current site to 0;
-%             if site > 0
-%                 satisf(site) = 0;
-%             end
+            if site > 0
+                satisf(site) = 0;
+            end
             
             if nargin == 3
                 dist = dist(next_site);
