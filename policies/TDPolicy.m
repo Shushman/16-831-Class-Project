@@ -5,19 +5,24 @@ classdef TDPolicy < Policy
         nSites
         P  % Policy of states
         P0 % Policy of initial position
+        td_para % parameters for TD
+        online % online learning or not
+        SV % variables used by SARSA
     end
 
     methods
     	% Initializes game with parameters
-    	function self = TDPolicy(game)
+    	function self = TDPolicy(game, para)
     		self.game = game;
     	    self.nSites = game.nSites;
     	    self.P = zeros(self.nSites,1);
     	    self.P0 = 0;
+    	    self.td_para = para;
+    	    self.online = false;
     	end
 
     	% training
-        function Q = training(self, nEpisodes )
+        function Q = training(self, nEpisodes, online )
         	% fill in interface with SARSA algorithm
         	ns = self.nSites;
         	Q = cell(ns+1,1);
@@ -36,30 +41,69 @@ classdef TDPolicy < Policy
         	% 	gamma: eligibility tree discount factor
         	% 	alpha: Q update step size, 0< alpha <= 1
         	% 	lambda: SARSA(lambda)
-			paraTrain.H       = self.game.nRounds;
-			paraTrain.n       = 1; 
-			paraTrain.epsilon = [1 0.2 0.10];
-			paraTrain.switchT = 0.5;
-			paraTrain.gamma   = 0.1;
-			paraTrain.alpha   = 0.9;
-			paraTrain.lambda  = 0.6;
-
-        	for epid = 1:nEpisodes
-				[P_, Q] = SARSA(s0, Q, ns+1, A, fun, paraTrain);
-        	end
-
-        	self.P0 = P_(1);
-        	self.P = P_(2:end);
+            self.online = online;
+            if ~online
+                for epid = 1:nEpisodes
+                    [P_, Q] = SARSA(s0, Q, ns+1, A, fun, self.td_para);
+                end
+                
+                self.P0 = P_(1);
+                self.P = P_(2:end);
+            else
+                % only do initialization
+                sv.Q  = Q;
+                sv.ns = ns+1;
+                sv.A  = A;
+                sv.T1 = ceil(self.td_para.H*self.td_para.switchT);
+                sv.Z  = cell(sv.ns,1);
+                for is = 1:sv.ns
+                    sv.Z{is} = zeros(sv.A(is),1);
+                end
+				sv.t    = 1;
+				sv.anew = 1;
+				self.SV = sv;
+            end
         end 
 
         % Choose next site 
         function nextsite = decision(self, site, round_)
-        	if round_ == 0
-        		nextsite = self.P0;
+        	if ~self.online
+        		if round_ == 0
+        			nextsite = self.P0;
+        		else
+        			nextsite = self.P(site);
+        		end
         	else
-        		nextsite = self.P(site);
+        		nextsite = self.SV.anew;
         	end
+        end % end function
+
+		% online learning
+        function updatePolicy(self, reward,snew,s)
+            snew = snew + 1; s = s + 1;
+        	sv = self.SV;
+        	if sv.t < sv.T1
+        		epsilon = ( (sv.T1-sv.t)*self.td_para.epsilon(1) + sv.t*self.td_para.epsilon(2) )/sv.T1;
+        	else
+        		epsilon = self.td_para.epsilon(3);
+        	end
+        	a = sv.anew;
+        	anew  = greedy_epsilon(sv.Q{snew}, epsilon);
+        	delta = reward + self.td_para.gamma*sv.Q{snew}(anew) - sv.Q{s}(a);
+        	% update eligibility tree
+        	sv.Z{s}(a)        = sv.Z{s}(a) + 1;
+        	for is = 1:sv.ns
+        		for ia = 1:sv.A(is)
+        			sv.Q{is}(ia) = sv.Q{is}(ia) + self.td_para.alpha*delta*sv.Z{is}(ia);
+        			sv.Z{is}(ia) = self.td_para.gamma*self.td_para.lambda*sv.Z{is}(ia);
+        		end
+        	end
+        	% update state action
+			sv.anew = anew;
+			sv.t    = sv.t + 1;
+			self.SV = sv;
         end
+
     end
     
 end
@@ -93,19 +137,12 @@ function [P, Q] = SARSA(s0, Q, ns, A, f, paraTrain)
 % epsilon-greedy profile:
 % 	T0 ~ T1: epsilon(1)~epsilon(2)
 % 	after T1: epsilon(3)
-T1 = ceil(paraTrain.n*paraTrain.switchT);
+T1 = ceil(paraTrain.H*paraTrain.switchT);
 
 % ------------------------------------------------------
 % 		Training
 % ------------------------------------------------------
 for epi = 1:paraTrain.n
-	% determine epsilon to use
-	if epi < T1
-		epsilon = ( (T1-epi)*paraTrain.epsilon(1) + epi*paraTrain.epsilon(2) )/T1;
-	else
-		epsilon = paraTrain.epsilon(3);
-	end
-
 	% initialize eligibility tree
 	Z = cell(ns,1); 
 	for is = 1:ns
@@ -116,6 +153,13 @@ for epi = 1:paraTrain.n
 	s = s0;
 	a = 1;
 	for t = 1:paraTrain.H
+		% determine epsilon to use
+		if t < T1
+			epsilon = ( (T1-t)*paraTrain.epsilon(1) + t*paraTrain.epsilon(2) )/T1;
+		else
+			epsilon = paraTrain.epsilon(3);
+		end
+
 		[snew, reward] = f(s, a);
 		if snew == 0
 			% episode terminated
