@@ -80,6 +80,9 @@ classdef TDPolicy < Policy
 
 		% online learning
         function updatePolicy(self, reward,snew,s)
+            if ~self.online
+                return;
+            end 
             snew = snew + 1; s = s + 1;
         	sv = self.SV;
         	if sv.t < sv.T1

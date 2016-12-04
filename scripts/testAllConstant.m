@@ -78,25 +78,31 @@ end
 
 
 %% TDPolicy
-game.reset();
-TDpolicy = TDPolicy(game);
+ game.reset();
+td_para.H       = nRounds;
+td_para.n       = 1; 
+td_para.epsilon = [1 0.2 0.05];%[1 0.2 0.10];
+td_para.switchT = 0.5;
+td_para.gamma   = 0.3;
+td_para.alpha   = 0.9;
+td_para.lambda  = 0.6;
+TDpolicy = TDPolicy(game,td_para);
 
-% train the policy
-TDpolicy.training(1);
+% for online learning, training function only do some initialization
+TDpolicy.training(1,false); 
 disp(TDpolicy.P);
 
-% test the policy
+% test the TDpolicy
 game.reset();
-agent = Agent(TDpolicy, game);
-TDsites = zeros(nRounds,1);
+agent     = Agent(TDpolicy, game);
+TDsites   = zeros(nRounds,1);
 TDrewards = zeros(nRounds,1);
-for i = 1:nRounds 
+for i = 1:nRounds
+    s              = agent.site;
     [reward, site] = agent.ride();
-    TDsites(i) = site;
-    TDrewards(i) = reward;
-    if draw
-        map.draw(prevsite, site, game, 'EXP3');
-    end
+    TDpolicy.updatePolicy(reward,site,s);
+    TDsites(i)     = site;
+    TDrewards(i)   = reward;
 end
 
 figure(1)

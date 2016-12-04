@@ -54,7 +54,7 @@ end
 game.reset();
 td_para.H       = nRounds;
 td_para.n       = 1; 
-td_para.epsilon = [1 1 1];%[1 0.2 0.10];
+td_para.epsilon = [1 0.2 0.05];%[1 0.2 0.10];
 td_para.switchT = 0.5;
 td_para.gamma   = 0.3;
 td_para.alpha   = 0.9;
