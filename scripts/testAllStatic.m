@@ -109,6 +109,23 @@ for i = 1:nRounds
     end
 end
 
+% Random Policy
+game.reset();
+RNDPolicy = RandomPolicy(game);
+agent = Agent(RNDPolicy, game);
+RNDsites = zeros(nRounds,1);
+RNDrewards = zeros(nRounds,1);
+prevsite = 0;
+for i = 1:nRounds
+    [reward, site, ~, satisf, waitTime] = agent.ride();
+    RNDsites(i) = site;
+    RNDrewards(i) = reward;
+    prevsite = site;
+    % if draw
+    %     map.draw(prevsite, site, game, 'RND');
+    % end
+end
+
 
 figure(1)
 subplot(1,2,1)
@@ -116,17 +133,19 @@ plot(1:nRounds, cumsum(DPrewards), 'ro',...
      1:nRounds, cumsum(UCBrewards),'k+',...
      1:nRounds, cumsum(TDrewards),'bp',...
      1:nRounds, cumsum(EXP3rewards), 'g*');
+hold on;plot(1:nRounds, cumsum(RNDrewards), 'r.','markersize',10);hold off
 xlabel('Rounds');
 ylabel('Cumulative Rewards')
-title('Comparison of DP, UCB, TD')
-legend('DP','UCB','TD','EXP3');
+title('Comparison of DP, UCB, TD,RND')
+legend('DP','UCB','TD','EXP3','RND');
 
 subplot(1,2,2)
 plot(1:nRounds, DPsites(1:nRounds), 'ro',...
      1:nRounds, UCBsites(1:nRounds), 'k+',...
      1:nRounds, TDsites(1:nRounds), 'bp',...
      1:nRounds, EXP3sites(1:nRounds), 'g*');
- xlabel('Rounds');
+hold on; plot(1:nRounds, RNDsites(1:nRounds), 'r.','markersize',10); hold off
+xlabel('Rounds');
 ylabel('Action taken at each timestep')
-title('Comparison of DP, UCB, TD')
-legend('DP','UCB','TD','EXP3');
+title('Comparison of DP, UCB, TD, RND')
+legend('DP','UCB','TD','EXP3','RND');
