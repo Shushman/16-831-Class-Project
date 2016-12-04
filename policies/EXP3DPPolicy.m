@@ -47,7 +47,8 @@ classdef EXP3DPPolicy < Policy
             end
             norm_wts = self.weights(prevsite,:) ./ sum(self.weights(prevsite,:));        
             % Check - IS this ok?
-            lossScalar = -reward;
+            assert (reward <= 1 && reward >=0);
+            lossScalar = 1-reward;
             
             lossVector = zeros(1,self.nSites);
             lossVector(site) = lossScalar / norm_wts(site);

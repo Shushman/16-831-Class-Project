@@ -17,12 +17,13 @@ classdef VaryingGame < Game
         weightDist           % weight on distance
         weightWait          % weight on wait time
         weightRide           % weight on ride satisfaction
+        normalize
     end
     
     methods
         
         % Initializes game with parameters
-        function self = VaryingGame(nSites,siteDist,m0,meanss,sigmass,fctnsw,sigmasw,nRounds,f,g,h)
+        function self = VaryingGame(nSites,siteDist,m0,meanss,sigmass,fctnsw,sigmasw,nRounds,f,g,h,normalize)
             self.nSites = nSites;
             self.siteDist = siteDist;
             self.m0 = m0;
@@ -36,6 +37,7 @@ classdef VaryingGame < Game
             self.weightRide = h;
             self.round = 0;
             self.pastRound = 1e5*ones(1,nSites);
+            self.normalize = normalize;
         end
         
         function reset(self)
@@ -49,6 +51,8 @@ classdef VaryingGame < Game
                 waitTime = normrnd(self.fctnsw{next_site}(self.nRounds),...
                     self.sigmasw(next_site));
                 satisf = normrnd(self.meanss(next_site),self.sigmass(next_site));
+                satisf = max(min(satisf, 1), 1e-3);
+                waitTime = max(min(waitTime, 1), 1e-3);
                 reward = -self.weightDist*self.m0 - self.weightWait*waitTime + self.weightRide*satisf;
                 return
             end
@@ -61,9 +65,16 @@ classdef VaryingGame < Game
             disp(self.pastRound);
             satisf = max(normrnd(self.meanss(next_site)...
                 *(1-exp(-self.pastRound(next_site)/5))...
-                ,self.sigmass(next_site)),0);
+                ,self.sigmass(next_site)),1e-3);
+            if self.normalize
+                satisf = max(min(satisf, 1), 1e-3);
+                waitTime = max(min(waitTime, 1), 1e-3);
+            end
             % Signs reflect reward
             reward = -self.weightDist*dist - self.weightWait*waitTime + self.weightRide*satisf;
+            if self.normalize
+                reward = max(min(reward, 1), 1e-3);
+            end
         end
         
         % Returns the elementwise reward for a single (state,action) pair
@@ -75,6 +86,11 @@ classdef VaryingGame < Game
                 waitTime = normrnd(self.fctnsw{next_site}(self.nRounds),...
                     self.sigmasw(next_site));
                 satisf = normrnd(self.meanss(next_site),self.sigmass(next_site));
+                if self.normalize
+                    satisf = max(min(satisf, 1), 1e-3);
+                    waitTime = max(min(waitTime, 1), 1e-3);
+                end
+
                 return
             end
             
@@ -85,7 +101,11 @@ classdef VaryingGame < Game
             self.pastRound(site) = 0;
             satisf = max(normrnd(self.meanss(next_site)...
                 *(1-exp(-self.pastRound(next_site)/5)),...
-                self.sigmass(next_site)),0);
+                self.sigmass(next_site)),1e-3);
+            if self.normalize
+                satisf = max(min(satisf, 1), 1e-3);
+                waitTime = max(min(waitTime, 1), 1e-3);
+            end
         end      
     end
 end

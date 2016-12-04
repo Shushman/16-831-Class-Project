@@ -9,16 +9,12 @@ nSites = 4;
 siteDist = ones(4,4) - eye(4);
 m0 = 0;
 means = [10, 20, 30, 40];
-means = means / max(means);
 lambdas = [20,5,5,30];
-lambdas = lambdas / max(lambdas);
-
 nRounds = 50;
 f = 0; g = 0; h = 1;
 
 %% Generate object 
-normalize = 1;
-game = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h,normalize);
+game = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h);
 policy = UCBPolicy(game);
 agent = Agent(policy, game);
 sites = zeros(nRounds,1);

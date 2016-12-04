@@ -14,12 +14,14 @@ classdef ConstantGame < Game
         weightDist           % weight on distance
         weightWait          % weight on wait time
         weightRide           % weight on ride satisfaction
+        normalize
     end
     
     methods
         
         % Initializes game with parameters
-        function self = ConstantGame(nSites,siteDist,m0,means,lambdas,nRounds,f,g,h)
+        function self = ConstantGame(nSites,siteDist,m0,means,lambdas,...
+                        nRounds,f,g,h, normalize)
             self.nSites = nSites;
             self.siteDist = siteDist;
             self.m0 = m0;
@@ -30,7 +32,11 @@ classdef ConstantGame < Game
             self.weightWait = g;
             self.weightRide = h;
             self.round = 0;     
-
+            if nargin == 9
+                self.normalize = 0;
+            else
+                self.normalize = normalize;
+            end
         end
         
         function reset(self)
@@ -40,12 +46,20 @@ classdef ConstantGame < Game
         function reward = get_reward(self, site, next_site)
             [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site);
             reward = -self.weightDist*dist - self.weightWait*waitTime + self.weightRide*satisf;
+            if self.normalize
+                reward = max(min(reward, 1), 0);
+            end
         end
         
         function rewards = get_all_rewards(self, site)
             [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site);
             rewards = -self.weightDist*dists - self.weightWait*waitTimes + self.weightRide*satisfs;
             rewards = rewards';
+            if self.normalize
+                rewards(rewards > 1) = 1;
+                rewards(rewards < 0) = 0;
+            end
+            
         end
         
         function [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site)
@@ -67,6 +81,12 @@ classdef ConstantGame < Game
             else
                 satisf = self.means(next_site);
             end
+            
+            if self.normalize
+                satisf = max(min(satisf, 1), 0);
+                waitTime = max(min(waitTime, 1), 0);
+            end
+            
         end
         
         function [dists, waitTimes, satisfs] = get_eltwise_rewards(self, site)
@@ -75,13 +95,24 @@ classdef ConstantGame < Game
                 waitTimes = self.lambdas;
                 satisfs = self.means;
                 dists = self.m0*ones(self.nSites, 1);
+                if self.normalize
+                    satisfs(satisfs > 1) = 1;
+                    satisfs(satisfs < 0) = 0;
+                    waitTimes(waitTimes > 1) = 1;
+                    waitTimes(waitTimes < 0) = 0;
+                end
                 return
             end
             
             dists = self.siteDist(site,:)';
             waitTimes = self.lambdas;
             satisfs = self.means;
-            
+            if normalize
+                satisfs(satisfs > 1) = 1;
+                satisfs(satisfs < 0) = 0;
+                waitTimes(waitTimes > 1) = 1;
+                waitTimes(waitTimes < 0) = 0;
+            end
             %Set reward for current site to 0;
             satisfs(site) = 0;
         end

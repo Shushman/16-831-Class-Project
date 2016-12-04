@@ -6,15 +6,16 @@ addpath ../data
 addpath ../
 
 %% Game parameters
-load('varyingPark.mat');
-meanss = meanss / max(meanss);
+load('map1.mat');
 
 %% nRounds or other parameters can be changed here
-nRounds = 500;
-% f = 2;
+nRounds = 100;
+% f = 1.5;
 
 %% Generate object 
-game = VaryingGame(nSites,siteDist,m0,meanss,sigmass,fctnsw,sigmasw,nRounds,f,g,h);
+sigmas = diag(sigmas)';
+game = StaticGame(nSites,siteDist,m0,means,sigmas,lambdas,nRounds,f,g,h);
+
 policy = UCBPolicy(game);
 agent = Agent(policy, game);
 sites = zeros(nRounds,1);
@@ -27,16 +28,13 @@ for i = 1:nRounds
     policy.updatePolicy(prevsite, site, satisf, waitTime);
     prevsite = site;
 end
+
 figure(1)
 plot(1:nRounds, cumsum(rewards), 'o-')
 xlabel('rounds')
 ylabel('cumulative rewards')
 
-figure(2)
-plot(1:nRounds, sites,'o','LineWidth',3);
-xlabel('Rounds');
-ylabel('Actions taken');
-% policy.drawUpperBounds();
-% figure(2);
-% plot(1:nRounds, sites,'o')
+policy.drawUpperBounds();
+figure(2);
+plot(1:nRounds, sites,'o')
 
