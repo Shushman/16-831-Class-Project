@@ -1,4 +1,4 @@
-classdef EXP3Policy < Policy
+classdef EXP3DPPolicy < Policy
     %EXP3Policy This is a concrete class that implements the EXP3
     %           algorithm for our problem setting
     
@@ -16,7 +16,7 @@ classdef EXP3Policy < Policy
     end
     
     methods
-        function self = EXP3Policy(game)
+        function self = EXP3DPPolicy(game)
             
             self.nSites = game.nSites;
             self.round = 0;
@@ -25,30 +25,35 @@ classdef EXP3Policy < Policy
             self.weightWait = game.weightWait;
             self.weightRide = game.weightRide;
             self.game = game;
-            self.weights = ones(1,self.nSites);
+            self.weights = ones(self.nSites,self.nSites);
             
         end
         
-        function action = decision(self,~,~)
-            
+        function action = decision(self,site,~)         
             self.round = self.round + 1;
-            norm_wts = self.weights ./ sum(self.weights);
+            if site == 0
+                norm_wts = ones(1,self.nSites)/self.nSites;
+            else
+                norm_wts = self.weights(site,:) ./ sum(self.weights(site,:));
+            end
             action_vect = mnrnd(1,norm_wts);
             [~,action] = max(action_vect);
-            self.lastAction = action;
+%             self.lastAction = action;
         end
         
-        function updatePolicy(self, reward)
-            norm_wts = self.weights ./ sum(self.weights);
-            
+        function updatePolicy(self, prevsite, site, reward)
+            if prevsite == 0
+                return
+            end
+            norm_wts = self.weights(prevsite,:) ./ sum(self.weights(prevsite,:));        
             % Check - IS this ok?
             lossScalar = -reward;
             
             lossVector = zeros(1,self.nSites);
-            lossVector(self.lastAction) = lossScalar / norm_wts(self.lastAction);
+            lossVector(site) = lossScalar / norm_wts(site);
             
             eta = sqrt(log(self.nSites)/(self.round*self.nSites));
-            self.weights = self.weights.*exp(-eta*lossVector);
+            self.weights(prevsite,:) = self.weights(prevsite,:).*exp(-eta*lossVector);
         end
             
         
