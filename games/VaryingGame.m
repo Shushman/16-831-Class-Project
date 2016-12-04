@@ -6,107 +6,81 @@ classdef VaryingGame < Game
     properties
         nSites      %Number of park sites
         siteDist    %Matrix of Pairwise distances between sites
+        
         m0          %Fixed distance from starting point to all sites
-        meanss      %1-x-n CURRENT Mean satisfaction from ride
-        sigmass     %1-x-n CURRENT Std. Deviations of rides
-        fctnsw      %1-x-n Cell of Functions of means of waittimes
-        sigmasw     %1-x-n CURRENT Std. Deviations of waittimes
-        nRounds     %Rounds to run game for
-        round       %current round
-        pastRound
-        weightDist           % weight on distance
-        weightWait          % weight on wait time
-        weightRide           % weight on ride satisfaction
-        normalize
+        satisfMeans
+        satisfSigmas
+        waitTimeF   %Function that generates mean and sigma of waitTime
+        pastRound   % number of rounds since previous visit
+        map
+        
     end
     
     methods
         
         % Initializes game with parameters
-        function self = VaryingGame(nSites,siteDist,m0,meanss,sigmass,fctnsw,sigmasw,nRounds,f,g,h,normalize)
-            self.nSites = nSites;
-            self.siteDist = siteDist;
-            self.m0 = m0;
-            self.meanss = meanss;
-            self.sigmass = sigmass;
-            self.fctnsw = fctnsw;
-            self.sigmasw = sigmasw;
+        function self = VaryingGame(map, satisfMeans, satisfSigmas, waitTimeF, f, g, h, nRounds)
+
+            self.nSites = map.nSites;
+            self.siteDist = map.siteDist;
+            self.m0 = map.m0;
+            self.map = map;
             self.nRounds = nRounds;
+            
+            assert ((f+g+h) == 1);
+            assert (all([f g h]) >= 0 && all([f g h] <= 1));
             self.weightDist = f;
             self.weightWait = g;
             self.weightRide = h;
+            
+            self.satisfMeans = satisfMeans;
+            self.satisfSigmas = satisfSigmas;
+            self.waitTimeF = waitTimeF;
+            
             self.round = 0;
-            self.pastRound = 1e5*ones(1,nSites);
-            self.normalize = normalize;
+            self.pastRound = 1e3*ones(1,self.nSites); % Haven't visited in a while!
         end
         
         function reset(self)
             self.round = 0;
+            self.pastRound = 1e3*ones(1,self.nSites); % Haven't visited in a while!
         end
-        % Returns the reward for a single (state,action) pair
-        function reward = get_reward(self, site, next_site)
-            self.round = self.round + 1;
-
-            if site < 1
-                waitTime = normrnd(self.fctnsw{next_site}(self.nRounds),...
-                    self.sigmasw(next_site));
-                satisf = normrnd(self.meanss(next_site),self.sigmass(next_site));
-                satisf = max(min(satisf, 1), 1e-3);
-                waitTime = max(min(waitTime, 1), 1e-3);
-                reward = -self.weightDist*self.m0 - self.weightWait*waitTime + self.weightRide*satisf;
-                return
-            end
-            
-            dist = self.siteDist(site,next_site);
-            waitTime = max(normrnd(self.fctnsw{next_site}(self.nRounds),...
-                    self.sigmasw(next_site)),0);
-            self.pastRound = self.pastRound+1;
-            self.pastRound(site) = 0;
-            disp(self.pastRound);
-            satisf = max(normrnd(self.meanss(next_site)...
-                *(1-exp(-self.pastRound(next_site)/5))...
-                ,self.sigmass(next_site)),1e-3);
-            if self.normalize
-                satisf = max(min(satisf, 1), 1e-3);
-                waitTime = max(min(waitTime, 1), 1e-3);
-            end
-            % Signs reflect reward
-            reward = -self.weightDist*dist - self.weightWait*waitTime + self.weightRide*satisf;
-            if self.normalize
-                reward = max(min(reward, 1), 1e-3);
-            end
-        end
-        
-        % Returns the elementwise reward for a single (state,action) pair
+           
         function [dist, waitTime, satisf] = get_eltwise_reward(self, site, next_site)
             self.round = self.round + 1;
             
             if site < 1
-                dist = self.m0;
-                waitTime = normrnd(self.fctnsw{next_site}(self.nRounds),...
-                    self.sigmasw(next_site));
-                satisf = normrnd(self.meanss(next_site),self.sigmass(next_site));
-                if self.normalize
-                    satisf = max(min(satisf, 1), 1e-3);
-                    waitTime = max(min(waitTime, 1), 1e-3);
-                end
-
-                return
+                dist = self.m0*ones(1,self.nSites);
+            else
+                dist = self.siteDist(site,:);
             end
             
-            dist = self.siteDist(site,next_site);
-            waitTime = max(normrnd(self.fctnsw{next_site}(self.nRounds),...
-                    self.sigmasw(next_site)),0);
-            self.pastRound = self.pastRound+1;
-            self.pastRound(site) = 0;
-            satisf = max(normrnd(self.meanss(next_site)...
-                *(1-exp(-self.pastRound(next_site)/5)),...
-                self.sigmass(next_site)),1e-3);
-            if self.normalize
-                satisf = max(min(satisf, 1), 1e-3);
-                waitTime = max(min(waitTime, 1), 1e-3);
+            if nargin == 2
+                waitTime = zeros(1, self.nSites);
+                satisf = zeros(1, self.nSites);
+                for i = 1:self.nSites
+                    [w] = self.waitTimeF{i}(self.round);
+                    waitTime(i) = clamp(normrnd(w(1), w(2)));
+                    satisf(i) = clamp(normrnd(self.satisfMeans(i)...
+                                        *(1-exp(-self.pastRound(i))),...
+                                       self.satisfSigmas(i))); 
+                end
+            else
+                dist = dist(next_site);
+                [w] = self.waitTimeF{next_site}(self.round);
+                waitTime = clamp(normrnd(w(1), w(2)));
+                satisf = clamp(normrnd(self.satisfMeans(next_site)...
+                                        *(1-exp(-self.pastRound(next_site))),...
+                                       self.satisfSigmas(next_site))); 
             end
-        end      
+            
+            % site has just been visited.
+            self.pastRound = self.pastRound+1;
+            if site > 0
+                self.pastRound(site) = 0;  
+            end
+        end
+        
     end
 end
 

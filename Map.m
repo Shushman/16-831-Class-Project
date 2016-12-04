@@ -7,35 +7,57 @@ classdef Map
         locations % 2xn where ith column is the (x,y) loc of ride i
         im;
         map;
-        m
+        gridSize
+        m0 % initial distance to all sites, Should be [0,1]
+        nSites % number of sites
     end
     
     methods
-        function self = Map(n, m)
-            % Uniformly random
-            self.m = m;
-            X = ceil(m*rand(2, n));
-            siteDist = zeros(n);
-            for i = 1:n
-                for j = 1:n
-                    siteDist(i,j) = norm(X(:,i) - X(:,j));
+        function self = Map(nSites, gridSize, m0, maptype)
+            self.nSites = nSites;
+            self.gridSize = gridSize;
+            self.m0 = m0;
+            assert (m0 <= 1 && m0 >= 0);
+
+            if strcmp(maptype,'uniform')
+                % Uniformly random
+                X = ceil(gridSize*rand(2, nSites));
+            else                
+                nparts = nSites / 4;
+
+                % X, Y location of rides
+                XMAX = gridSize;
+                YMAX = gridSize;
+                GRIDS = XMAX*YMAX;
+                [X,Y] = meshgrid(1:XMAX,1:YMAX);
+                X = X(:);
+                Y = Y(:);
+                index = randperm(GRIDS,nparts);
+                X = X(index);
+                Y = Y(index);
+                Cntr = [X';Y'];
+                Std = 5*ones(1,nparts);
+
+                X = [];
+
+                n = round(nSites/nparts);
+                for i = 1:nparts
+                    X = [X randn(2,n)*Std(i)+repmat(Cntr(:,i),1,n)];
                 end
             end
+            
+            siteDist = pdist2(X',X');
             self.locations = X;
-            self.siteDist = siteDist;
-           
-            figure(2);
-            f = getframe;
-            [self.im,self.map] = rgb2ind(f.cdata,256,'nodither');
+            self.siteDist = siteDist / max(max(siteDist));
 
         end
         
         % draws expected reward from current site
-        function [im, map] = draw(self, site, nextsite, game, filename)
+        function draw(self, site, nextsite, game, filename)
             
             figure(2);clf;hold on;
             n = size(self.locations, 2);
-            m = self.m;
+            m = self.gridSize;
             means = game.means;
             lambdas = game.lambdas;
            
@@ -47,13 +69,9 @@ classdef Map
             end
             
             % expected rewards
-            rewards = -game.weightDist*siteDist ...
-                     - game.weightWait*lambdas ...
-                     + game.weightRide*means;
-            
-            rewards = (rewards - min(rewards) + 1);
-            rewards = rewards / max(rewards);
-            
+            rewards = compute_reward(game.weightDist, game.weightWait, game.weightRide,...
+                                     siteDist, lambdas, means);
+                                     
             % all rides
             for i = 1:n
                 loc = self.locations(:,i);
@@ -91,14 +109,12 @@ classdef Map
             plot([m+0.5,m+0.5], [0.5,m+0.5],'k','LineWidth',2);
             axis([0,11,0,11])
             axis equal tight
-            drawnow;
+%             drawnow;
             saveas(gcf,strcat('../fig/', filename, ...
                    sprintf('%.2d',game.round), '.png'));
 
-            pause(0.001);
+%             pause(0.001);
             hold off;
-            im = self.im;
-            map = self.map;
         end
         
         

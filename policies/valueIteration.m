@@ -1,4 +1,4 @@
-function [policy,value,firstSite] = valueIteration(gameObj,f,g,h)
+function [policy,value,firstSite] = valueIteration(gameObj)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,7 +11,7 @@ while t < gameObj.nRounds
     t = t+1;
     oldValue = value;
     for s = 1:gameObj.nSites
-        currRewards = gameObj.get_all_rewards(s);
+        currRewards = gameObj.get_reward(s);
         
         % Get rewards from taking each action
        
@@ -24,14 +24,14 @@ end
 
 % Get policy
 for s = 1:gameObj.nSites
-    currRewards = gameObj.get_all_rewards(s);
+    currRewards = gameObj.get_reward(s);
     tempVals = currRewards + value;
     
     [~,a] = max(tempVals);
     policy.update(s, a);
 end
 
-initRewards = gameObj.get_all_rewards(0);
+initRewards = gameObj.get_reward(0);
 tempVals = initRewards + value;
 [~,firstSite] = max(tempVals);
 policy.update(0, firstSite);

@@ -42,7 +42,7 @@ classdef UCBPolicy < Policy
             self.round = self.round + 1;
             C = self.countObserved;
             ubSatisf = self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C));
-            lbWaitTime = max(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)),0);
+            lbWaitTime = self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C));
             if self.round == 1
                 dist = self.game.m0*ones(1, self.nSites);
             else
@@ -55,11 +55,10 @@ classdef UCBPolicy < Policy
                 ubSatisf(site) = 0;
             end
 
-            ubReward = -self.weightDist*dist - self.weightWait*lbWaitTime + self.weightRide*ubSatisf;
-            [~, action] = max(ubReward);
-
-
-                      
+            ubReward = compute_reward(self.weightDist, self.weightWait, self.weightRide, ...
+                                     dist, lbWaitTime, ubSatisf);
+                                     
+            [~, action] = max(ubReward);  
         end
         
         function updatePolicy(self, prevsite, site, satisf, waittime)

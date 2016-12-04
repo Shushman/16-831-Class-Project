@@ -24,11 +24,7 @@ classdef Agent < handle
         
         function [reward, nextsite, cumReward, satisf, waitTime] = ride(self)
             nextsite = self.policy.decision(self.site, self.game.round);
-            [dist, waitTime, satisf] = self.game.get_eltwise_reward(self.site, nextsite); 
-            reward = -self.weightDist*dist - self.weightWait*waitTime + self.weightRide*satisf;
-            if self.game.normalize
-                reward = max(min(reward, 1), 0);
-            end
+            [reward, ~, waitTime, satisf] = self.game.get_reward(self.site, nextsite); 
             self.cumReward = self.cumReward + reward;
             cumReward = self.cumReward;
             self.site = nextsite;
