@@ -20,7 +20,8 @@ classdef StaticGame < Game
     methods
         
         % Initializes game with parameters
-        function self = StaticGame(nSites,siteDist,m0,means,sigmas,lambdas,nRounds,f,g,h)
+        function self = StaticGame(nSites,siteDist,m0,means,sigmas,...
+                                   lambdas,nRounds,f,g,h)
             self.nSites = nSites;
             self.siteDist = siteDist;
             self.m0 = m0;
