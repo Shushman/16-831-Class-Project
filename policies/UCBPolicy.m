@@ -34,7 +34,7 @@ classdef UCBPolicy < Policy
             self.sumSatisf = zeros(1, self.nSites);
             self.sumWaitTime = zeros(1, self.nSites);
             self.countObserved = 1e-5*ones(1, self.nSites);
-            self.alpha = 0.1;
+            self.alpha = 0.05;
         end
         
         function action = decision(self, site, ~)
@@ -75,23 +75,27 @@ classdef UCBPolicy < Policy
 
         end        
         
-        function drawUpperBounds(self)
+        function drawUpperBounds(self, satisfs, waittimes)
             figure(3);
-            clf; hold on;
+            clf; 
+            subplot(1,2,1);
+            hold on;
+            color = ['r','g','b','k','y'];
             for i = 1:self.nSites
-                plot(self.ubSatisfs(:, i),'LineWidth',3);
+                plot(self.ubSatisfs(:, i),'Color',color(i),'LineWidth',3);
+                plot(1:self.round, ones(1,self.round)*satisfs(i),'--','Color',color(i),'LineWidth',1)
             end
-            xlabel('Rounds'); ylabel('Upper bound');
-            title('Upper bound on Ride Satisfaction')
-            
-            figure(4)
-            clf;
+            xlabel('Rounds','FontSize',20); ylabel('Upper bound','FontSize',20);
+            title('Ride Satisfaction','FontSize',20)
+
+            subplot(1,2,2);
             hold on;
             for i = 1:self.nSites
-                plot(self.lbWaitTimes(:, i),'LineWidth',3);
+                plot(self.lbWaitTimes(:, i),'Color',color(i),'LineWidth',3);
+                plot(1:self.round, ones(1,self.round)*waittimes(i),'--','Color',color(i),'LineWidth',2)
             end
-            xlabel('Rounds'); ylabel('Lower bound');
-            title('Lower bound on Wait Time')
+            xlabel('Rounds','FontSize',20); ylabel('Lower bound','FontSize',20);
+            title('Wait Time','FontSize',20)
             hold off;
             
             

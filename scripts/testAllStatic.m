@@ -8,9 +8,9 @@ addpath ../
 %% Game parameters
 nSites = 10;
 map = Map(10, 100, 1, 'uniform');
-means = rand(1,nSites);
-sigmas = rand(1,nSites);
-lambdas = rand(1,nSites);
+means = clamp(rand(1,nSites));
+sigmas = clamp(rand(1,nSites));
+lambdas = clamp(rand(1,nSites));
 
 %% nRounds or other parameters can be changed here
 nRounds = 100;
@@ -99,7 +99,7 @@ agent     = Agent(TDpolicy, game);
 TDsites   = zeros(nRounds,1);
 TDrewards = zeros(nRounds,1);
 for i = 1:nRounds
-    prevsite              = agent.site;
+    prevsite       = agent.site;
     [reward, site] = agent.ride();
     TDpolicy.updatePolicy(reward,site,prevsite);
     TDsites(i)     = site;
