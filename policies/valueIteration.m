@@ -5,21 +5,32 @@ function [policy,value,firstSite] = valueIteration(gameObj)
 policy = FullDPPolicy(gameObj);
 value = zeros(1,gameObj.nSites);
 
+lambda = 1;
 t = 0;
-
-while t < gameObj.nRounds
+N = gameObj.nSites;
+while t<3000
     t = t+1;
     oldValue = value;
-    for s = 1:gameObj.nSites
+    % generate random ordering
+    idx = randperm(N);
+    for i = 1:N
+%         s = idx(i);
+        s = i;
         currRewards = gameObj.get_reward(s);
         
         % Get rewards from taking each action
        
-        tempVals = currRewards + oldValue;
+        tempVals = currRewards + lambda*oldValue;
         [v,~] = max(tempVals);
         value(s) = v;
     end
-    
+    % check termination
+%     dv = norm(value - oldValue);
+%     sumv = sum(value);
+%     disp(['t: ' num2str(t) ' dv: ' num2str(dv) ' sum:' num2str(sumv)]);
+%     if dv < 1e-8
+%         break;
+%     end
 end
 
 % Get policy

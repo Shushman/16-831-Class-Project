@@ -9,8 +9,8 @@ addpath ../
 nSites = 10;
 map = Map(10, 100, 1, 'uniform');
 means = clamp(rand(1,nSites));
-sigmas = clamp(rand(1,nSites));
-lambdas = clamp(rand(1,nSites));
+sigmas = 0.1*clamp(rand(1,nSites));
+lambdas = 0.1*clamp(rand(1,nSites));
 
 %% nRounds or other parameters can be changed here
 nRounds = 100;
@@ -126,6 +126,11 @@ for i = 1:nRounds
     % end
 end
 
+allRewards = [sum(DPrewards) sum(UCBrewards) sum(TDrewards) sum(EXP3rewards) sum(RNDrewards)];
+names = {'DP','UCB','TD','EXP3','RND'};
+[~,idx] = sort(allRewards);
+disp(names(idx));
+disp(allRewards(idx));
 
 figure(1)
 subplot(1,2,1)
