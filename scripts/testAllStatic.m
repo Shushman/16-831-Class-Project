@@ -6,18 +6,18 @@ addpath ../data
 addpath ../
 
 %% Game parameters
-nSites = 10;
-map = Map(10, 100, 1, 'uniform');
-means = clamp(rand(1,nSites));
+nSites = 4;
+map = Map(nSites, 100, 1, 'uniform');
+means = [0.1, 0.3, 0.5, 0.8];
+lambdas = [0.8, 0.5, 0.3, 0.1];
 sigmas = 0.1*clamp(rand(1,nSites));
-lambdas = 0.1*clamp(rand(1,nSites));
 
 %% nRounds or other parameters can be changed here
 nRounds = 100;
 w = [1 1 1];
 w = w/sum(w);
 
-draw = 0;
+draw = 1;
 
 %% Generate object 
 game = StaticGame(map, means,sigmas,lambdas,nRounds,w(1),w(2),w(3));
@@ -33,9 +33,9 @@ for i = 1:nRounds
     [reward, site] = agent.ride();
     DPsites(i) = site;
     DPrewards(i) = reward;
-    if draw
-        map.draw(prevsite, site, game, 'DP');
-    end
+%     if draw
+%         map.draw(prevsite, site, game, 'DP');
+%     end
     prevsite = site;
 
 end
@@ -57,6 +57,7 @@ for i = 1:nRounds
     end
     prevsite = site;
 end
+ucbPolicy.drawUpperBounds(game.means, game.lambdas);
 
 
 % EXP3 Policy
@@ -105,7 +106,7 @@ for i = 1:nRounds
     TDsites(i)     = site;
     TDrewards(i)   = reward;
     if draw
-        map.draw(prevsite, site, game, 'EXP3');
+        map.draw(prevsite, site, game, 'TD');
     end
 end
 
@@ -121,9 +122,6 @@ for i = 1:nRounds
     RNDsites(i) = site;
     RNDrewards(i) = reward;
     prevsite = site;
-    % if draw
-    %     map.draw(prevsite, site, game, 'RND');
-    % end
 end
 
 allRewards = [sum(DPrewards) sum(UCBrewards) sum(TDrewards) sum(EXP3rewards) sum(RNDrewards)];
@@ -133,24 +131,23 @@ disp(names(idx));
 disp(allRewards(idx));
 
 figure(1)
+
 subplot(1,2,1)
 plot(1:nRounds, cumsum(DPrewards), 'ro',...
      1:nRounds, cumsum(UCBrewards),'k+',...
      1:nRounds, cumsum(TDrewards),'bp',...
-     1:nRounds, cumsum(EXP3rewards), 'g*');
-hold on;plot(1:nRounds, cumsum(RNDrewards), 'r.','markersize',10);hold off
-xlabel('Rounds');
-ylabel('Cumulative Rewards')
-title('Comparison of DP, UCB, TD,RND')
+     1:nRounds, cumsum(EXP3rewards), 'g*',...
+     1:nRounds, cumsum(RNDrewards), 'md');
+xlabel('Rounds', 'FontSize',20);
+ylabel('Cumulative Rewards','FontSize',20)
 legend('DP','UCB','TD','EXP3','RND');
 
 subplot(1,2,2)
-plot(1:nRounds, DPsites(1:nRounds), 'ro',...
-     1:nRounds, UCBsites(1:nRounds), 'k+',...
-     1:nRounds, TDsites(1:nRounds), 'bp',...
-     1:nRounds, EXP3sites(1:nRounds), 'g*');
-hold on; plot(1:nRounds, RNDsites(1:nRounds), 'r.','markersize',10); hold off
-xlabel('Rounds');
-ylabel('Action taken at each timestep')
-title('Comparison of DP, UCB, TD, RND')
-legend('DP','UCB','TD','EXP3','RND');
+initRound = floor(nRounds/4*3);
+plot(initRound:nRounds, DPsites(initRound:nRounds), 'ro',...
+     initRound:nRounds, UCBsites(initRound:nRounds), 'k+',...
+     initRound:nRounds, TDsites(initRound:nRounds), 'bp',...
+     initRound:nRounds, EXP3sites(initRound:nRounds), 'g*');
+ 
+xlabel('Rounds', 'FontSize',20);
+ylabel('Action', 'FontSize',20)

@@ -50,7 +50,7 @@ classdef StaticGame < Game
             else
                 dist = self.siteDist(site,:);
             end
-            waitTime = clamp(poissrnd(self.lambdas));
+            waitTime = clamp(normrnd(self.lambdas,self.sigmas));
             satisf = clamp(normrnd(self.means,self.sigmas));
             
             if site > 0

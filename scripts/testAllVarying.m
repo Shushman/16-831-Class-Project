@@ -7,10 +7,10 @@ addpath ../
 draw = 0;
 
 %% Game parameters
-[map, game] = varyingPark('uniform', 12, 60);
+[map, game] = varyingPark('w', 32, 100);
 
 %% nRounds or other parameters can be changed here
-nRounds = 100;
+nRounds = 3000;
 
 % UCB Policy
 game.reset();

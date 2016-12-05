@@ -14,12 +14,10 @@ while t<3000
     % generate random ordering
     idx = randperm(N);
     for i = 1:N
-%         s = idx(i);
-        s = i;
+        s = idx(i);
         currRewards = gameObj.get_reward(s);
         
-        % Get rewards from taking each action
-       
+        % Get rewards from taking each action       
         tempVals = currRewards + lambda*oldValue;
         [v,~] = max(tempVals);
         value(s) = v;

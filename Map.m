@@ -52,6 +52,22 @@ classdef Map
 
         end
         
+        function draw_map(self)
+            figure(1);clf;
+            m = self.gridSize;
+            hold on;
+            scatter(self.locations(1,:), self.locations(2,:), 200, 'Filled');
+            
+            % axis
+            plot([0.5 0.5], [0.5,m+0.5], 'k', 'LineWidth',2);
+            plot([m+0.5,0.5], [m+0.5,m+0.5],'k','LineWidth',2);
+            plot([0.5 m+0.5], [0.5,0.5], 'k', 'LineWidth',2);
+            plot([m+0.5,m+0.5], [0.5,m+0.5],'k','LineWidth',2);
+            axis([0,m+1,0,m+1])
+            axis equal tight
+            
+        end
+        
         % draws expected reward from current site
         function draw(self, site, nextsite, game, filename)
             
@@ -107,11 +123,11 @@ classdef Map
             plot([m+0.5,0.5], [m+0.5,m+0.5],'k','LineWidth',2);
             plot([0.5 m+0.5], [0.5,0.5], 'k', 'LineWidth',2);
             plot([m+0.5,m+0.5], [0.5,m+0.5],'k','LineWidth',2);
-            axis([0,11,0,11])
+            axis([0,m+1,0,m+1])
             axis equal tight
 %             drawnow;
             saveas(gcf,strcat('../fig/', filename, ...
-                   sprintf('%.2d',game.round), '.png'));
+                   sprintf('%.3d',game.round), '.png'));
 
 %             pause(0.001);
             hold off;

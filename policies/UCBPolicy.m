@@ -34,15 +34,15 @@ classdef UCBPolicy < Policy
             self.sumSatisf = zeros(1, self.nSites);
             self.sumWaitTime = zeros(1, self.nSites);
             self.countObserved = 1e-5*ones(1, self.nSites);
-            self.alpha = 0.05;
+            self.alpha = 0.1;
         end
         
         function action = decision(self, site, ~)
             % Choose action
             self.round = self.round + 1;
             C = self.countObserved;
-            ubSatisf = clamp(self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C)));
-            lbWaitTime = clamp(self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)));
+            ubSatisf = (self.sumSatisf./C + sqrt(self.alpha*log(self.round)./(2*C)));
+            lbWaitTime = (self.sumWaitTime./C - sqrt(self.alpha*log(self.round)./(2*C)));
             if self.round == 1
                 dist = self.game.m0*ones(1, self.nSites);
             else
