@@ -10,14 +10,14 @@ nSites = 4;
 map = Map(nSites, 100, 1, 'uniform');
 means = [0.1, 0.3, 0.5, 0.8];
 lambdas = [0.8, 0.5, 0.3, 0.1];
-sigmas = 0.1*clamp(rand(1,nSites));
+sigmas = clamp(rand(1,nSites));
 
 %% nRounds or other parameters can be changed here
-nRounds = 100;
+nRounds = 1000;
 w = [1 1 1];
 w = w/sum(w);
 
-draw = 1;
+draw = 0;
 
 %% Generate object 
 game = StaticGame(map, means,sigmas,lambdas,nRounds,w(1),w(2),w(3));
@@ -85,9 +85,9 @@ td_para.H       = nRounds;
 td_para.n       = 1; 
 td_para.epsilon = [1 0.2 0.05];%[1 0.2 0.10];
 td_para.switchT = 0.5;
-td_para.gamma   = 0.3;
-td_para.alpha   = 0.9;
-td_para.lambda  = 0.6;
+td_para.gamma   = 1;
+td_para.alpha   = 0.1;
+td_para.lambda  = 0.1;
 TDpolicy = TDPolicy(game,td_para);
 
 % for online learning, training function only do some initialization
@@ -124,30 +124,51 @@ for i = 1:nRounds
     prevsite = site;
 end
 
-allRewards = [sum(DPrewards) sum(UCBrewards) sum(TDrewards) sum(EXP3rewards) sum(RNDrewards)];
-names = {'DP','UCB','TD','EXP3','RND'};
+
+% Hindsight Greedy Policy
+game.reset();
+greedyPolicy = HindsightGreedyPolicy(game);
+greedysites = zeros(nRounds,1);
+greedyrewards = zeros(nRounds,1);
+prevsite = 0;
+for i = 1:nRounds
+    Rewards = game.get_reward(prevsite); % round +1
+    [reward, site] = max(Rewards);
+
+    greedysites(i) = site;
+    greedyrewards(i) = reward;
+
+    prevsite = site;
+end
+
+
+allRewards = [sum(DPrewards) sum(UCBrewards) sum(TDrewards) sum(EXP3rewards) sum(RNDrewards) sum(greedyrewards)];
+names = {'DP','UCB','TD','EXP3','RND','Hindsight'};
 [~,idx] = sort(allRewards);
 disp(names(idx));
 disp(allRewards(idx));
 
+
+
 figure(1)
 
 subplot(1,2,1)
-plot(1:nRounds, cumsum(DPrewards), 'ro',...
-     1:nRounds, cumsum(UCBrewards),'k+',...
-     1:nRounds, cumsum(TDrewards),'bp',...
-     1:nRounds, cumsum(EXP3rewards), 'g*',...
-     1:nRounds, cumsum(RNDrewards), 'md');
+plot(1:nRounds, cumsum(DPrewards), '-r',...
+     1:nRounds, cumsum(UCBrewards),'-k',...
+     1:nRounds, cumsum(TDrewards),'-b',...
+     1:nRounds, cumsum(EXP3rewards), '-g',...
+     1:nRounds, cumsum(RNDrewards), '-m',...
+     1:nRounds, cumsum(greedyrewards), '-y','linewidth',2);
 xlabel('Rounds', 'FontSize',20);
 ylabel('Cumulative Rewards','FontSize',20)
-legend('DP','UCB','TD','EXP3','RND');
+legend('DP','UCB','TD','EXP3','RND','Hindsight');
 
 subplot(1,2,2)
 initRound = floor(nRounds/4*3);
 plot(initRound:nRounds, DPsites(initRound:nRounds), 'ro',...
      initRound:nRounds, UCBsites(initRound:nRounds), 'k+',...
      initRound:nRounds, TDsites(initRound:nRounds), 'bp',...
-     initRound:nRounds, EXP3sites(initRound:nRounds), 'g*');
- 
+     initRound:nRounds, EXP3sites(initRound:nRounds), 'g*',...
+     initRound:nRounds, greedysites(initRound:nRounds), 'g*');
 xlabel('Rounds', 'FontSize',20);
 ylabel('Action', 'FontSize',20)

@@ -7,10 +7,10 @@ addpath ../
 draw = 0;
 
 %% Game parameters
-[map, game] = varyingPark('w', 32, 100);
+[map, game] = varyingPark('w', 16, 100);
 
 %% nRounds or other parameters can be changed here
-nRounds = 3000;
+nRounds = 5000;
 
 % UCB Policy
 game.reset();
@@ -97,23 +97,41 @@ for i = 1:nRounds
     % end
 end
 
+% Hindsight Greedy Policy
+game.reset();
+greedyPolicy = HindsightGreedyPolicy(game);
+greedysites = zeros(nRounds,1);
+greedyrewards = zeros(nRounds,1);
+prevsite = 0;
+for i = 1:nRounds
+    Rewards = game.get_reward(prevsite); % round +1
+    [reward, site] = max(Rewards);
+
+    greedysites(i) = site;
+    greedyrewards(i) = reward;
+
+    prevsite = site;
+end
+
 figure(1)
-subplot(1,2,1)
-plot(1:nRounds, cumsum(UCBrewards),'k+',...
-     1:nRounds, cumsum(TDrewards),'bp',...
-     1:nRounds, cumsum(EXP3rewards), 'g*');
-hold on;plot(1:nRounds, cumsum(RNDrewards), 'r.','markersize',10);hold off
+% subplot(1,2,1)
+plot(1:nRounds, cumsum(UCBrewards),'k-',...
+     1:nRounds, cumsum(TDrewards),'b-',...
+     1:nRounds, cumsum(EXP3rewards), 'g-',...
+     1:nRounds, cumsum(RNDrewards), 'r-',...
+     1:nRounds, cumsum(greedyrewards), 'y.','linewidth',2);
+
 xlabel('Rounds');
 ylabel('Cumulative Rewards')
-title('Comparison of UCB, TD, EXP3, RND')
-legend('UCB','TD','EXP3','RND');
+title('Comparison of UCB, TD, EXP3, RND, Hindsight')
+legend('UCB','TD','EXP3','RND','Hindsight');
 
-subplot(1,2,2)
-plot(1:nRounds, UCBsites(1:nRounds), 'k+',...
-     1:nRounds, TDsites(1:nRounds), 'bp',...
-     1:nRounds, EXP3sites(1:nRounds), 'g*');
-hold on; plot(1:nRounds, RNDsites(1:nRounds), 'r.','markersize',10); hold off
-xlabel('Rounds');
-ylabel('Action taken at each timestep')
-title('Comparison of UCB, TD, EXP,RND')
-legend('UCB','TD','EXP3','RND');
+% subplot(1,2,2)
+% plot(1:nRounds, UCBsites(1:nRounds), 'k+',...
+%      1:nRounds, TDsites(1:nRounds), 'bp',...
+%      1:nRounds, EXP3sites(1:nRounds), 'g*');
+% hold on; plot(1:nRounds, RNDsites(1:nRounds), 'r.','markersize',10); hold off
+% xlabel('Rounds');
+% ylabel('Action taken at each timestep')
+% title('Comparison of UCB, TD, EXP,RND')
+% legend('UCB','TD','EXP3','RND');
